@@ -111,7 +111,7 @@ Brauzerdə `http://127.0.0.1:8000/` ünvanını açın.
 Bütün test hesablarının şifrəsi: **`password123`**
 * **Admin:** `admin` / `admin123Qazx` (Balans: 1000 ₼)
 * **Satıcılar:** `elmir_ramazanov`, `kerim_hasanov`, `ali_aliyev`, `rahman_islamzade` (Hər biri 1000 ₼)
-* **Alıcılar:** `ali_shukurlu`, `rasim_xalilov`, `nurlan_resulzade` (Hər biri 1000 ₼)
+* **Alıcılar:** `ali_shukurlu`, `rasim_xalilov`, `nurlan_resulzade`, `necef_hesenaliyev` (Hər biri 1000 ₼)
 
 ---
 
