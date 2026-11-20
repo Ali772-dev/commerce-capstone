@@ -116,6 +116,6 @@ Bütün test hesablarının şifrəsi: **`password123`**
 ---
 
 ## 👨‍💻 Müəllif
-* **Tələbə:** Əli Əlizadə
+* **Tələbə:** Əli Əliyev
 * **Fənn:** Verilənlər Bazasının İdarəetmə Sistemləri (VBİS)
 * **Layihə:** Capstone Project — Milestone 3

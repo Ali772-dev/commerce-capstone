@@ -2,7 +2,7 @@
 -- CAPSTONE LAYİHƏSİ – MƏRHƏLƏ 3
 -- Layihənin Adı: Onlayn Açıq-Artırma və Hərrac İdarəetmə Sistemi (Online Auction Management System)
 -- Fənn: Verilənlər Bazasının İdarəetmə Sistemləri (VBİS)
--- Tələbə: Əli Əlizadə
+-- Tələbə: Əli Əliyev
 -- Fayl: schema.sql
 -- Təsvir: Verilənlər bazasının sxemi, cədvəllər, PK/FK/CHECK/UNIQUE məhdudiyyətləri,
 --         təhlükəsizlik triggerləri və analitik VIEW-lər.
