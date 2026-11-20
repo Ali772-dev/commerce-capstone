@@ -1,0 +1,121 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Xəta və ya Şikayət Bildir | Onlayn Hərrac Sistemi{% endblock %}
+
+{% block body %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-decoration-none"><i class="bi bi-house-door"></i> Ana Səhifə</a></li>
+        {% if target_listing %}
+            <li class="breadcrumb-item"><a href="{% url 'listing' target_listing.id %}" class="text-decoration-none">{{ target_listing.title|truncatechars:25 }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active" aria-current="page">Xəta / Şikayət Bildir</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Header Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 52px; height: 52px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </div>
+                <div>
+                    <h1 class="h4 fw-bold mb-1 text-dark">Xəta və ya Şikayət Bildir (Report)</h1>
+                    <p class="text-muted small mb-0">
+                        Platformada qarşılaşdığınız texniki nasazlıqlar, qayda pozuntuları və ya şübhəli elanlar haqqında məlumat verin. Bütün bildirişlər birbaşa **Supabase verilənlər bazasında** saxlanılır və inzibatçılar tərəfindən dərhal araşdırılır.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Listing Card (If reporting specific listing) -->
+        {% if target_listing %}
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4 border-start border-danger border-4">
+                <div class="d-flex align-items-center gap-3">
+                    {% if target_listing.display_image %}
+                        <img src="{{ target_listing.display_image }}" alt="{{ target_listing.title }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                    {% endif %}
+                    <div>
+                        <div class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small mb-1">
+                            Şikayət edilən elan
+                        </div>
+                        <h5 class="fw-bold text-dark mb-0 fs-6">{{ target_listing.title }}</h5>
+                        <div class="text-muted small">
+                            Satıcı: <strong>{{ target_listing.creator.username }}</strong> &bull; Cari Qiymət: <strong>{{ target_listing.current_bid }} ₼</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Report Form Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.listing }}
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-secondary">
+                        <i class="bi bi-tag-fill me-1 text-primary"></i> {{ form.report_type.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.report_type }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-secondary">
+                        <i class="bi bi-card-heading me-1 text-primary"></i> {{ form.title.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.title }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-secondary">
+                        <i class="bi bi-body-text me-1 text-primary"></i> {{ form.description.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.description }}
+                    <div class="form-text small text-muted">Zəhmət olmasa problemi mümkün qədər aydın izah edin.</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-secondary">
+                            <i class="bi bi-camera-fill me-1 text-primary"></i> {{ form.screenshot.label }}
+                        </label>
+                        {{ form.screenshot }}
+                        <div class="form-text small text-muted">Xətanı əks etdirən skrinşot (istəyə görə).</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-secondary">
+                            <i class="bi bi-envelope-fill me-1 text-primary"></i> {{ form.reporter_email.label }}
+                        </label>
+                        {{ form.reporter_email }}
+                        <div class="form-text small text-muted">Nəticə haqqında sizə məlumat göndərə bilməyimiz üçün.</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    {% if target_listing %}
+                        <a href="{% url 'listing' target_listing.id %}" class="btn btn-outline-secondary btn-sm px-3">
+                            <i class="bi bi-arrow-left me-1"></i> Elana Qayıt
+                        </a>
+                    {% else %}
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm px-3">
+                            <i class="bi bi-arrow-left me-1"></i> İmtina Et
+                        </a>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-danger btn-sm px-4 py-2 fw-semibold">
+                        <i class="bi bi-send-fill me-1"></i> Bildirişi Göndər
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

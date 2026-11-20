@@ -1,0 +1,23 @@
+# Environment and secrets
+.env
+.env.local
+
+# Database
+*.sqlite3
+pg_data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary scripts
+scratch/
+
+# IDE
+.vscode/
+.idea/
+
+# Media uploads (optional if large, but keep structure)
+# media/

@@ -1,0 +1,181 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Qeydiyyat | Onlayn Hərrac Sistemi{% endblock %}
+
+{% block body %}
+
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 480px;">
+        <!-- Logo & Title -->
+        <div class="auth-brand-center">
+            <div class="brand-icon mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h2 class="h3 fw-bold mb-1">Yeni Hesab Yarat</h2>
+            <p class="text-muted small">Hərraclarda iştirak etmək və ya məhsul çıxarmaq üçün qeydiyyatdan keçin</p>
+        </div>
+
+        {% if message %}
+            <div class="alert alert-danger py-2 px-3 small mb-3">
+                <i class="bi bi-exclamation-circle-fill me-1"></i>
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <form action="{% url 'register' %}" method="post">
+            {% csrf_token %}
+
+            <div class="auth-input-group mb-3">
+                <i class="bi bi-person auth-input-icon"></i>
+                <input class="form-control" autofocus type="text" name="username" placeholder="İstifadəçi adı (Unikal)" required>
+            </div>
+
+            <div class="auth-input-group mb-3">
+                <i class="bi bi-envelope auth-input-icon"></i>
+                <input class="form-control" type="email" name="email" placeholder="E-poçt ünvanı (Unikal - BR-1)" required>
+            </div>
+
+            <div class="auth-input-group mb-3">
+                <i class="bi bi-telephone auth-input-icon"></i>
+                <input class="form-control" type="text" name="phone" placeholder="Əlaqə nömrəsi (FT-9) məs: +994 50 123 45 67">
+            </div>
+
+            <!-- İstifadəçi Rolu (Bölmə 3) -->
+            <div class="mb-3 text-start">
+                <label class="form-label small fw-semibold text-secondary">
+                    <i class="bi bi-person-badge me-1"></i> Platformadakı Əsas Rolunuz:
+                </label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input type="radio" class="btn-check" name="role" id="roleBuyer" value="BUYER" checked>
+                        <label class="btn btn-outline-primary w-100 py-2 small" for="roleBuyer">
+                            <i class="bi bi-bag-check d-block fs-5 mb-1"></i> Alıcı (Təklif verən)
+                        </label>
+                    </div>
+                    <div class="col-6">
+                        <input type="radio" class="btn-check" name="role" id="roleSeller" value="SELLER">
+                        <label class="btn btn-outline-primary w-100 py-2 small" for="roleSeller">
+                            <i class="bi bi-shop d-block fs-5 mb-1"></i> Satıcı (Hərrac açan)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-input-group mb-3">
+                <i class="bi bi-lock auth-input-icon"></i>
+                <input class="form-control" type="password" name="password" placeholder="Şifrə" required>
+            </div>
+
+            <div class="auth-input-group mb-4">
+                <i class="bi bi-shield-check auth-input-icon"></i>
+                <input class="form-control" type="password" name="confirmation" placeholder="Şifrənin Təkrarı" required>
+            </div>
+
+            <!-- Qaydalar və Müqavilələrin Təsdiqlənməsi (Güvənlik Tələbi) -->
+            <div class="card p-3 bg-light border-0 rounded-3 mb-4 text-start">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="terms_confirmed" id="termsConfirmed" required>
+                    <label class="form-check-label small text-secondary" for="termsConfirmed">
+                        Mən <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#termsModal" class="fw-semibold text-primary text-decoration-underline">İstifadəçi Razılaşması</a>, 
+                        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#rulesModal" class="fw-semibold text-primary text-decoration-underline">Hərrac Qaydaları</a> və 
+                        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#financeModal" class="fw-semibold text-primary text-decoration-underline">Maliyyə Öhdəlikləri Şərtlərini</a> 
+                        oxudum və tam qəbul edirəm.
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary w-100 py-2 fs-6 mb-3" type="submit">
+                <i class="bi bi-person-check-fill me-1"></i> Qeydiyyatı Tamamla
+            </button>
+        </form>
+
+        <div class="text-center pt-3 border-top small text-muted">
+            Artıq hesabınız var? 
+            <a href="{% url 'login' %}" class="fw-bold text-primary">Daxil olun</a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 1: İstifadəçi Razılaşması -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="termsModalLabel"><i class="bi bi-file-earmark-text-fill me-2"></i>İstifadəçi Razılaşması və Məxfilik Siyasəti</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Bağla"></button>
+            </div>
+            <div class="modal-body text-start small">
+                <h6 class="fw-bold text-dark">1. Ümumi Müddəalar</h6>
+                <p>Bu Razılaşma Onlayn Hərrac Platformasının ("Platforma") xidmətlərindən istifadə qaydalarını və şərtlərini tənzimləyir. Qeydiyyatdan keçən hər bir istifadəçi bu şərtlərlə hüquqi olaraq razılaşmış sayılır.</p>
+                <h6 class="fw-bold text-dark">2. Hesab Məlumatlarının Dəqiqliyi</h6>
+                <p>İstifadəçi qeydiyyat zamanı təqdim etdiyi məlumatların (ad, əlaqə nömrəsi, e-poçt ünvanı) tam və düzgün olduğunu təsdiq edir. Hər bir istifadəçi platformada yalnız bir aktiv hesaba sahib ola bilər.</p>
+                <h6 class="fw-bold text-dark">3. Şəxsi Məlumatların Qorunması</h6>
+                <p>İstifadəçinin təqdim etdiyi FİN kod, şəxsiyyət vəsiqəsi və çatdırılma ünvanı məlumatları şifrələnmiş verilənlər bazasında saxlanılır və yalnız sifarişlərin çatdırılması və hərracın təhlükəsizliyinin təmini məqsədilə istifadə olunur.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-sm px-4" data-bs-dismiss="modal">Oxudum və Razıyam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Açıq Hərrac Qaydaları -->
+<div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold" id="rulesModalLabel"><i class="bi bi-hammer me-2"></i>Açıq Hərrac Qaydaları və Standartları</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Bağla"></button>
+            </div>
+            <div class="modal-body text-start small">
+                <h6 class="fw-bold text-dark">1. Ədalətli Rəqabət və Qiymət Təklifləri (BR-2, BR-8)</h6>
+                <ul class="mb-3">
+                    <li><strong>Satıcı Məhdudiyyəti (BR-2):</strong> Satıcı heç bir halda özünün yerləşdirdiyi məhsula qiymət təklifi (bid) verə bilməz.</li>
+                    <li><strong>Lider Alıcı Qaydası (BR-8):</strong> Hərracda ən yüksək təklif verərək cari lider olan alıcı, başqa bir iştirakçı yeni təklif verməyənə qədər ard-arda öz təklifini artıra bilməz.</li>
+                    <li><strong>Minimum Artım Addımı (BR-4):</strong> Hər bir təklif cari qiymət üzərinə məhsul üçün müəyyən edilmiş minimum addımdan az ola bilməz.</li>
+                </ul>
+                <h6 class="fw-bold text-dark">2. Hərracın Müddəti və Qalibin Təyini (BR-6, BR-7)</h6>
+                <p>Hərrac elan edilən dəqiq vaxtda avtomatik başa çatır (BR-6). Vaxt bitdikdən sonra yeni təkliflər qəbul edilmir və ən yüksək təklif sahibi avtomatik olaraq hərracın rəsmi qalibi elan edilir.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark btn-sm px-4" data-bs-dismiss="modal">Qaydaları Qəbul Edirəm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Maliyyə Öhdəlikləri və Cüzdan Qaydaları -->
+<div class="modal fade" id="financeModal" tabindex="-1" aria-labelledby="financeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="financeModalLabel"><i class="bi bi-shield-check me-2"></i>Maliyyə Öhdəlikləri və Cüzdan Təminatı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Bağla"></button>
+            </div>
+            <div class="modal-body text-start small">
+                <div class="alert alert-warning py-2 mb-3">
+                    <i class="bi bi-shield-exclamation me-1"></i>
+                    <strong>Diqqət:</strong> Platformada verilən hər bir təklif hüquqi və maliyyə öhdəliyi daşıyır.
+                </div>
+                <h6 class="fw-bold text-dark">1. Balans Təminatı və Rezerv Mexanizmi (BR-10)</h6>
+                <p>İştirakçı yalnız daxili cüzdanında mövcud olan sərbəst vəsait qədər təklif verə bilər. İstifadəçi bir neçə hərracda eyni vaxtda iştirak etdikdə:</p>
+                <ul>
+                    <li>Lider olduğu hər bir hərrac üzrə təklif məbləği cüzdanda rezerv edilir.</li>
+                    <li>Rezerv edilmiş vəsaitlərin cəmi ümumi cüzdan balansını aşa bilməz (məsələn, 800 ₼ balansı olan istifadəçi 1-ci hərraca 400 ₼ təklif veribsə, 2-ci hərraca 500 ₼ təklif verə bilməz, çünki cəmi 900 ₼ edir).</li>
+                    <li>Əgər başqa bir alıcı istifadəçinin təklifini keçərsə, həmin məbləğ dərhal rezervdən azad olunur və sərbəst balansa qayıdır.</li>
+                </ul>
+                <h6 class="fw-bold text-dark">2. Qalibiyyətdən Sonra Məhsulu Alma Öhdəliyi və Etibarlılıq Balı</h6>
+                <p>Hərracı qazanan alıcı məhsulu cüzdan balansı vasitəsilə rəsmiləşdirib ödəməyə borcludur. Uğurlu ödəniş istifadəçinin etibarlılıq balını <strong>+2%</strong> artırır. Məhsuldan əsassız imtina edildikdə və ya ödənilmədikdə:</p>
+                <ul>
+                    <li>İstifadəçinin etibarlılıq balından <strong>-15% cərimə</strong> tutulur.</li>
+                    <li>Etibarlılıq balı aşağı düşən və ya öhdəliyini pozan istifadəçilərin hesabı sistem tərəfindən daimi bloklana bilər.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success btn-sm px-4" data-bs-dismiss="modal">Şərtlərlə Razıyam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

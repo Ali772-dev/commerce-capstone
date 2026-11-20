@@ -1,0 +1,142 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Browse Categories | AuctionHub{% endblock %}
+
+{% block body %}
+
+<div class="mb-4">
+    <h1 class="h2 fw-bold mb-1"><i class="bi bi-tags-fill text-primary me-2"></i>Explore Categories</h1>
+    <p class="text-muted">Discover top auctions organized by your favorite categories</p>
+</div>
+
+<!-- Category Cards Grid -->
+<div class="row g-3 mb-5">
+    {% for code, name in categories %}
+    <div class="col-lg col-md-4 col-sm-6">
+        <a href="{% url 'categories' %}?category={{ code }}" class="category-card {% if selected_category == code %}active{% endif %} text-decoration-none">
+            <div class="category-card-icon">
+                {% if code == 'electronics' %}
+                    <i class="bi bi-laptop"></i>
+                {% elif code == 'fashion' %}
+                    <i class="bi bi-handbag"></i>
+                {% elif code == 'home' %}
+                    <i class="bi bi-house-door"></i>
+                {% elif code == 'books' %}
+                    <i class="bi bi-book"></i>
+                {% elif code == 'toys' %}
+                    <i class="bi bi-controller"></i>
+                {% else %}
+                    <i class="bi bi-tag"></i>
+                {% endif %}
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold">{{ name }}</h5>
+                <span class="small text-muted">Browse items &rarr;</span>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Category Listings Results -->
+{% if selected_category %}
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold mb-0">
+                Listings in <span class="text-primary text-capitalize">{{ selected_category }}</span>
+            </h2>
+            <span class="text-muted small">Showing all active items in this category</span>
+        </div>
+        <a href="{% url 'categories' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-x-circle"></i> Clear Filter
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for listing in listings %}
+        <div class="col-lg-4 col-md-6">
+            <div class="listing-card">
+                <!-- Image -->
+                <div class="listing-card-img-wrap">
+                    {% if listing.image %}
+                        <img src="{{ listing.image.url }}" class="listing-card-img" alt="{{ listing.title }}">
+                    {% else %}
+                        <div class="listing-placeholder-img">
+                            <i class="bi bi-image"></i>
+                            <span class="small fw-semibold">No Image</span>
+                        </div>
+                    {% endif %}
+
+                    <span class="badge-tag-category">
+                        <i class="bi bi-tag-fill"></i> {{ selected_category|title }}
+                    </span>
+
+                    <span class="badge-tag-status">
+                        <span class="pulse-dot"></span> Live
+                    </span>
+
+                    {% if listing.end_time %}
+                        <span class="badge-tag-time">
+                            <i class="bi bi-clock-history text-warning"></i> {{ listing.end_time|date:"d M, H:i" }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Card Body -->
+                <div class="listing-card-body">
+                    <h3 class="listing-card-title" title="{{ listing.title }}">{{ listing.title }}</h3>
+                    <p class="listing-card-desc">{{ listing.description }}</p>
+
+                    <!-- Pricing Box -->
+                    <div class="listing-pricing-box">
+                        <div>
+                            <div class="price-label">
+                                {% if listing.current_bid %}Cari Təklif{% else %}Başlanğıc Qiyməti{% endif %}
+                            </div>
+                            <div class="price-value fw-bold text-primary">
+                                {% if listing.current_bid %}{{ listing.current_bid }}{% else %}{{ listing.starting_bid }}{% endif %} ₼
+                            </div>
+                            {% if listing.end_time %}
+                                <div class="small text-danger fw-semibold mt-1">
+                                    <i class="bi bi-stopwatch"></i> {{ listing.end_time|date:"d M, H:i" }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <a href="{% url 'listing' listing.id %}" class="btn btn-primary btn-sm px-3">
+                            Təklif Ver <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state-card">
+                <div class="empty-state-icon">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h3 class="empty-state-title">No Active Listings in {{ selected_category|title }}</h3>
+                <p class="empty-state-text">
+                    There are currently no active listings in this category. Check back soon or list an item yourself!
+                </p>
+                <a href="{% url 'create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle-fill"></i> List an Item in {{ selected_category|title }}
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state-card">
+        <div class="empty-state-icon">
+            <i class="bi bi-cursor-fill"></i>
+        </div>
+        <h3 class="empty-state-title">Select a Category Above</h3>
+        <p class="empty-state-text">
+            Click on any category card above to explore curated active auction listings.
+        </p>
+    </div>
+{% endif %}
+
+{% endblock %}

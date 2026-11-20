@@ -1,0 +1,481 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}{{ profile_user.username }} Profili | Onlayn Hərrac Sistemi{% endblock %}
+
+{% block body %}
+
+<!-- Profile Header Banner Card -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%); height: 130px; position: relative;">
+        <div style="position: absolute; right: 20px; bottom: 10px; opacity: 0.15; font-size: 5rem; color: #fff;">
+            <i class="bi bi-person-badge"></i>
+        </div>
+    </div>
+
+    <div class="p-4" style="margin-top: -55px; position: relative; z-index: 2;">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+            
+            <!-- User Info & Avatar -->
+            <div class="d-flex align-items-end gap-3">
+                <div style="width: 100px; height: 100px; border-radius: 50%; background: #ffffff; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <div style="width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #818cf8); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 2.5rem; font-weight: 800;">
+                        {{ profile_user.username|make_list|first|upper }}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <h2 class="h3 fw-bold mb-1 d-flex align-items-center gap-2">
+                        {{ profile_user.get_full_name|default:profile_user.username }}
+                        {% if is_self %}
+                            <span class="badge bg-primary-subtle text-primary border small" style="font-size: 0.7rem;">Mənim Profilim</span>
+                        {% endif %}
+                        {% if profile_user.is_blocked %}
+                            <span class="badge bg-danger rounded-pill small" style="font-size: 0.7rem;">Bloklanıb (BLOCKED)</span>
+                        {% else %}
+                            <span class="badge bg-success-subtle text-success border small" style="font-size: 0.7rem;">Aktiv</span>
+                        {% endif %}
+                    </h2>
+                    <div class="text-muted small d-flex flex-wrap gap-3">
+                        <span><i class="bi bi-at me-1"></i>{{ profile_user.username }}</span>
+                        <span><i class="bi bi-calendar3 me-1"></i> Qeydiyyat: {{ profile_user.date_joined|date:"d M Y" }}</span>
+                        {% if profile_user.phone %}
+                            <span><i class="bi bi-telephone me-1"></i> {{ profile_user.phone }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow / Admin / Action Buttons -->
+            <div class="mb-2 d-flex gap-2">
+                {% if not is_self %}
+                    <a href="{% url 'toggle_follow' profile_user.id %}" class="btn {% if is_following %}btn-outline-danger{% else %}btn-primary{% endif %} btn-sm px-3">
+                        {% if is_following %}
+                            <i class="bi bi-person-dash-fill me-1"></i> İzləmədən Çıx
+                        {% else %}
+                            <i class="bi bi-person-plus-fill me-1"></i> İzlə
+                        {% endif %}
+                    </a>
+
+                    <!-- Admin Block / Unblock Button (FT-7) -->
+                    {% if user.is_authenticated and user.is_admin_user %}
+                        <a href="{% url 'toggle_user_status' profile_user.id %}" class="btn {% if profile_user.is_blocked %}btn-success{% else %}btn-outline-danger{% endif %} btn-sm" onclick="return confirm('İstifadəçinin statusunu dəyişmək istədiyinizdən əminsiniz?');">
+                            {% if profile_user.is_blocked %}
+                                <i class="bi bi-unlock-fill me-1"></i> Hesabı Aktivləşdir (FT-7)
+                            {% else %}
+                                <i class="bi bi-slash-circle-fill me-1"></i> İstifadəçini Blokla (FT-7)
+                            {% endif %}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'create' %}" class="btn btn-primary btn-sm px-3">
+                        <i class="bi bi-plus-circle-fill me-1"></i> Yeni Elan Yerləşdir
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Capstone Məlumat Paneli (Depozit, Reputasiya, Rol, İzləyicilər) -->
+        <div class="row g-3 mt-3 pt-3 border-top">
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="p-3 bg-light rounded-3 border text-center">
+                    <div class="text-muted small fw-semibold">Sistem Rolu</div>
+                    <div class="fw-bold fs-6 text-primary mt-1">
+                        <i class="bi bi-person-badge me-1"></i> {{ profile_user.get_role_display }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="p-3 bg-light rounded-3 border text-center">
+                    <div class="text-muted small fw-semibold">Depozit Balansı</div>
+                    <div class="fw-bold fs-5 text-success mt-1">
+                        {{ profile_user.deposit_balance }} ₼
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="p-3 bg-light rounded-3 border text-center">
+                    <div class="text-muted small fw-semibold">Etibarlılıq Balı</div>
+                    <div class="fw-bold fs-5 text-warning mt-1">
+                        {{ profile_user.reputation_score }}%
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="p-3 bg-light rounded-3 border text-center">
+                    <div class="text-muted small fw-semibold">Qazanılan Hərraclar</div>
+                    <div class="fw-bold fs-5 text-dark mt-1">
+                        {{ won_listings|length }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="p-3 bg-light rounded-3 border text-center" style="cursor: pointer;" onclick="document.getElementById('followers-tab').click();">
+                    <div class="text-muted small fw-semibold">İzləyicilər</div>
+                    <div class="fw-bold fs-5 text-primary mt-1">
+                        <i class="bi bi-people-fill me-1"></i>{{ followers_count }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="p-3 bg-light rounded-3 border text-center" style="cursor: pointer;" onclick="document.getElementById('following-tab').click();">
+                    <div class="text-muted small fw-semibold">İzlənilənlər</div>
+                    <div class="fw-bold fs-5 text-info mt-1">
+                        <i class="bi bi-person-check-fill me-1"></i>{{ following_count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Left Column: Edit Profile (Identity & Location) -->
+    {% if is_self and profile_form %}
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="h5 fw-bold mb-0 text-dark">
+                    <i class="bi bi-person-vcard text-primary me-2"></i>Kimlik və Məkan Məlumatları
+                </h4>
+                {% if user.is_identity_verified %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
+                        <i class="bi bi-patch-check-fill me-1"></i> Təsdiqlənib
+                    </span>
+                {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill small">
+                        Tamamlanmayıb
+                    </span>
+                {% endif %}
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Section 1: Əsas və Əlaqə -->
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <span class="text-uppercase fw-bold text-secondary small d-block mb-2">
+                        <i class="bi bi-person-fill text-primary me-1"></i> Şəxsi və Əlaqə Məlumatları
+                    </span>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.first_name.label }}</label>
+                            {{ profile_form.first_name }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.last_name.label }}</label>
+                            {{ profile_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.email.label }}</label>
+                        {{ profile_form.email }}
+                    </div>
+                    <div>
+                        <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.phone.label }}</label>
+                        {{ profile_form.phone }}
+                    </div>
+                </div>
+
+                <!-- Section 2: Kimlik Məlumatları (FIN & Ş/V) -->
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <span class="text-uppercase fw-bold text-secondary small d-block mb-2">
+                        <i class="bi bi-shield-lock-fill text-success me-1"></i> Dövlət Kimlik Məlumatları
+                    </span>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.fin_code.label }}</label>
+                            {{ profile_form.fin_code }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.id_card_number.label }}</label>
+                            {{ profile_form.id_card_number }}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.birth_date.label }}</label>
+                        {{ profile_form.birth_date }}
+                    </div>
+                </div>
+
+                <!-- Section 3: Məkan və Çatdırılma Ünvanı -->
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <span class="text-uppercase fw-bold text-secondary small d-block mb-2">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Yer / Məkan və Çatdırılma Ünvanı
+                    </span>
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.city.label }}</label>
+                            {{ profile_form.city }}
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.postal_code.label }}</label>
+                            {{ profile_form.postal_code }}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label small fw-semibold text-secondary mb-1">{{ profile_form.address.label }}</label>
+                        {{ profile_form.address }}
+                    </div>
+                </div>
+
+                <button type="submit" name="update_profile" class="btn btn-primary w-100 btn-sm py-2 rounded-pill fw-bold shadow-sm">
+                    <i class="bi bi-check2-circle me-1"></i> Məlumatları Yadda Saxla
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Right Column: Tabs (Active, Closed, Bids, Won) -->
+    <div class="{% if is_self %}col-lg-7{% else %}col-12{% endif %}">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            
+            <ul class="nav nav-pills mb-3 border-bottom pb-3 gap-2" id="profileTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active btn-sm" id="active-tab" data-bs-toggle="tab" data-bs-target="#tabActive">
+                        <i class="bi bi-lightning-charge me-1"></i> Aktiv Hərraclar ({{ active_listings|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link btn-sm" id="bids-tab" data-bs-toggle="tab" data-bs-target="#tabBids">
+                        <i class="bi bi-hammer me-1"></i> Təklif Tarixçəsi ({{ bidded_items|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link btn-sm" id="won-tab" data-bs-toggle="tab" data-bs-target="#tabWon">
+                        <i class="bi bi-trophy me-1"></i> Qazanılan Hərraclar ({{ won_listings|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link btn-sm" id="closed-tab" data-bs-toggle="tab" data-bs-target="#tabClosed">
+                        <i class="bi bi-archive me-1"></i> Bitmiş Hərraclar ({{ closed_listings|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link btn-sm" id="followers-tab" data-bs-toggle="tab" data-bs-target="#tabFollowers">
+                        <i class="bi bi-people-fill me-1"></i> İzləyicilər ({{ followers_count }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link btn-sm" id="following-tab" data-bs-toggle="tab" data-bs-target="#tabFollowing">
+                        <i class="bi bi-person-check-fill me-1"></i> İzlənilənlər ({{ following_count }})
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Tab: Active Listings -->
+                <div class="tab-pane fade show active" id="tabActive">
+                    <div class="row g-3">
+                        {% for item in active_listings %}
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <div class="fw-bold text-dark text-truncate">{{ item.title }}</div>
+                                    <div class="small text-primary fw-bold mt-1">Cari: {{ item.current_bid }} ₼</div>
+                                    <div class="small text-muted">Bitir: {{ item.end_time|date:"d M, H:i" }}</div>
+                                    <a href="{% url 'listing' item.id %}" class="btn btn-outline-primary btn-sm mt-2 w-100">Bax &rarr;</a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted small text-center py-4">Hazırda aktiv hərrac yoxdur.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Tab: Bids -->
+                <div class="tab-pane fade" id="tabBids">
+                    <div class="list-group list-group-flush">
+                        {% for b in bidded_items %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <div>
+                                    <a href="{% url 'listing' b.listing.id %}" class="fw-semibold text-dark text-decoration-none">
+                                        {{ b.listing.title }}
+                                    </a>
+                                    {% if b.is_leading %}
+                                        <span class="badge bg-success ms-1">Lider Sizsiniz</span>
+                                    {% endif %}
+                                </div>
+                                <span class="fw-bold text-primary">{{ b.my_bid }} ₼</span>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted small text-center py-4">Hələ heç bir təklif verilməyib.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Tab: Won Listings (Sifarişlər və Ödənişlər) -->
+                <div class="tab-pane fade" id="tabWon">
+                    <div class="row g-3">
+                        {% for w in won_listings %}
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-4 bg-white shadow-sm h-100 d-flex flex-column justify-content-between border-start border-4 {% if w.auction_result.payment_status == 'PAID' %}border-success{% elif w.auction_result.payment_status == 'CANCELLED' %}border-danger{% else %}border-warning{% endif %}">
+                                    <div>
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            {% if w.auction_result.payment_status == 'PAID' %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                                                    <i class="bi bi-check-circle-fill me-1"></i> Ödənildi
+                                                </span>
+                                            {% elif w.auction_result.payment_status == 'CANCELLED' %}
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
+                                                    <i class="bi bi-x-circle-fill me-1"></i> İmtina Edildi
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                                                    <i class="bi bi-hourglass-split me-1"></i> Ödəniş Gözlənilir
+                                                </span>
+                                            {% endif %}
+                                            <span class="fw-bold text-success fs-6">{{ w.current_bid }} ₼</span>
+                                        </div>
+
+                                        <h6 class="fw-bold text-dark text-truncate mb-1" title="{{ w.title }}">{{ w.title }}</h6>
+                                        <div class="small text-muted mb-2">
+                                            Satıcı: <strong>{{ w.seller_name|default:w.creator.username }}</strong>
+                                            {% if w.phone_number or w.creator.phone %}
+                                                ({{ w.phone_number|default:w.creator.phone }})
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                                        {% if is_self %}
+                                            {% if w.auction_result.payment_status == 'PAID' %}
+                                                <a href="{% url 'checkout' w.id %}" class="btn btn-outline-success btn-sm flex-grow-1 rounded-pill">
+                                                    <i class="bi bi-receipt me-1"></i> Qəbz
+                                                </a>
+                                            {% elif w.auction_result.payment_status == 'CANCELLED' %}
+                                                <span class="btn btn-light btn-sm flex-grow-1 rounded-pill disabled text-danger small">Ləğv olunub</span>
+                                            {% else %}
+                                                <a href="{% url 'checkout' w.id %}" class="btn btn-success btn-sm flex-grow-1 rounded-pill fw-bold shadow-sm">
+                                                    <i class="bi bi-credit-card me-1"></i> İndi Ödə
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                        <a href="{% url 'listing' w.id %}" class="btn btn-light btn-sm border rounded-pill px-3" title="Elana bax">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted small text-center py-4">Hələ qazanılmış hərrac yoxdur.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Tab: Closed Listings -->
+                <div class="tab-pane fade" id="tabClosed">
+                    <div class="row g-3">
+                        {% for c in closed_listings %}
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <div class="fw-bold text-muted text-truncate">{{ c.title }}</div>
+                                    <div class="small text-muted mt-1">Yekun: {{ c.current_bid }} ₼</div>
+                                    {% if c.winner %}
+                                        <div class="small text-success">Qalib: {{ c.winner.username }}</div>
+                                    {% else %}
+                                        <div class="small text-secondary">Təklifsiz başa çatıb</div>
+                                    {% endif %}
+                                    <a href="{% url 'listing' c.id %}" class="btn btn-outline-secondary btn-sm mt-2 w-100">Arxivə Bax</a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted small text-center py-4">Bitmiş elan yoxdur.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Tab: Followers (İzləyicilər) -->
+                <div class="tab-pane fade" id="tabFollowers">
+                    <div class="row g-3">
+                        {% for item in followers_data %}
+                            {% with u=item.user %}
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between gap-2">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                        <div class="flex-shrink-0" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #818cf8); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                            {{ u.username|make_list|first|upper }}
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <a href="{% url 'profile' u.username %}" class="fw-bold text-dark text-decoration-none text-truncate d-block">
+                                                {{ u.get_full_name|default:u.username }}
+                                            </a>
+                                            <div class="small text-muted text-truncate">
+                                                <i class="bi bi-at"></i>{{ u.username }} &bull; {{ u.get_role_display }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0 d-flex gap-1">
+                                        {% if not item.is_me and user.is_authenticated %}
+                                            <a href="{% url 'toggle_follow' u.id %}" class="btn {% if item.is_following %}btn-outline-danger{% else %}btn-primary{% endif %} btn-sm" style="font-size: 0.78rem;">
+                                                {% if item.is_following %}
+                                                    <i class="bi bi-person-dash-fill"></i> Çıx
+                                                {% else %}
+                                                    <i class="bi bi-person-plus-fill"></i> İzlə
+                                                {% endif %}
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'profile' u.username %}" class="btn btn-outline-secondary btn-sm" title="Profilə keç" style="font-size: 0.78rem;">
+                                            <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endwith %}
+                        {% empty %}
+                            <div class="text-muted small text-center py-4">Hazırda heç bir izləyici yoxdur.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Tab: Following (İzlənilənlər) -->
+                <div class="tab-pane fade" id="tabFollowing">
+                    <div class="row g-3">
+                        {% for item in following_data %}
+                            {% with u=item.user %}
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between gap-2">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                        <div class="flex-shrink-0" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                            {{ u.username|make_list|first|upper }}
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <a href="{% url 'profile' u.username %}" class="fw-bold text-dark text-decoration-none text-truncate d-block">
+                                                {{ u.get_full_name|default:u.username }}
+                                            </a>
+                                            <div class="small text-muted text-truncate">
+                                                <i class="bi bi-at"></i>{{ u.username }} &bull; {{ u.get_role_display }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0 d-flex gap-1">
+                                        {% if not item.is_me and user.is_authenticated %}
+                                            <a href="{% url 'toggle_follow' u.id %}" class="btn {% if item.is_following %}btn-outline-danger{% else %}btn-primary{% endif %} btn-sm" style="font-size: 0.78rem;">
+                                                {% if item.is_following %}
+                                                    <i class="bi bi-person-dash-fill"></i> Çıx
+                                                {% else %}
+                                                    <i class="bi bi-person-plus-fill"></i> İzlə
+                                                {% endif %}
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'profile' u.username %}" class="btn btn-outline-secondary btn-sm" title="Profilə keç" style="font-size: 0.78rem;">
+                                            <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endwith %}
+                        {% empty %}
+                            <div class="text-muted small text-center py-4">Hazırda heç kim izlənilmir.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

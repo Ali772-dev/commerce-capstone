@@ -1,0 +1,209 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Canlı Hərraclar | Onlayn Hərrac və Açıq-Artırma Sistemi{% endblock %}
+
+{% block body %}
+
+<!-- Hero Banner -->
+<section class="hero-section mb-4">
+    <div class="row align-items-center position-relative" style="z-index: 2;">
+        <div class="col-lg-9">
+            <div class="hero-badge">
+                <i class="bi bi-fire text-warning"></i> Canlı və Dəqiq Vaxtlı Açıq-Artırma
+            </div>
+            <h1 class="hero-title">Onlayn Hərrac və Açıq-Artırma Sistemi</h1>
+            <p class="hero-subtitle">
+                Ənənəvi hərracların çatışmazlıqlarını aradan qaldıran, şəffaf, dəqiq bitmə vaxtına və avtomatlaşdırılmış qiymətləndirməyə malik mərkəzləşdirilmiş platforma.
+            </p>
+
+            <!-- Stats Row -->
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ listings|length }}</span>
+                    <span class="stat-label">Aktiv Hərrac</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">6</span>
+                    <span class="stat-label">Kateqoriya</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">AZN (₼)</span>
+                    <span class="stat-label">Rəsmi Valyuta</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">UTC+04:00</span>
+                    <span class="stat-label">Bakı Vaxtı</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filter & Search Card (FT-5 Tələbi: Ad, Kateqoriya və Qiymət Aralığı ilə Süzgəc) -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="get" action="{% url 'index' %}" class="row g-2 align-items-end">
+        <!-- Açar sözlə axtarış -->
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label small fw-semibold text-secondary mb-1">
+                <i class="bi bi-search me-1 text-primary"></i> Açar Sözlə Axtarış
+            </label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Məhsul adı və ya təsvir..." value="{{ query }}">
+        </div>
+
+        <!-- Kateqoriya -->
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-semibold text-secondary mb-1">
+                <i class="bi bi-tags-fill me-1 text-primary"></i> Kateqoriya
+            </label>
+            <select name="category" class="form-select form-select-sm">
+                <option value="">Bütün Kateqoriyalar</option>
+                {% for code, name in categories %}
+                    <option value="{{ code }}" {% if selected_category == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Qiymət Aralığı (Min / Max AZN) -->
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label small fw-semibold text-secondary mb-1">
+                <i class="bi bi-cash-stack me-1 text-success"></i> Qiymət Aralığı (₼ AZN)
+            </label>
+            <div class="input-group input-group-sm">
+                <input type="number" step="0.50" min="0" name="min_price" class="form-control" placeholder="Min" value="{{ min_price }}">
+                <span class="input-group-text bg-light text-muted">-</span>
+                <input type="number" step="0.50" min="0" name="max_price" class="form-control" placeholder="Max" value="{{ max_price }}">
+            </div>
+        </div>
+
+        <!-- Sıralama -->
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-semibold text-secondary mb-1">
+                <i class="bi bi-sort-down me-1 text-primary"></i> Sıralama
+            </label>
+            <select name="sort" class="form-select form-select-sm">
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Ən Yeni Əlavə Edilən</option>
+                <option value="ending_soon" {% if sort == 'ending_soon' %}selected{% endif %}>Vaxtı Bitmək Üzrə</option>
+                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Əvvəlcə Ucuz</option>
+                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Əvvəlcə Baha</option>
+            </select>
+        </div>
+
+        <!-- Düymələr -->
+        <div class="col-lg-2 col-md-12 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                <i class="bi bi-funnel-fill me-1"></i> Süzgəc
+            </button>
+            {% if query or selected_category or min_price or max_price or sort != 'newest' %}
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm" title="Süzgəci sıfırla">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Section Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 fw-bold text-dark">
+            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Aktiv Hərraclar
+        </h2>
+        <p class="text-muted small mb-0">Hərrac vaxtı bitmədən qiymət təklifinizi irəli sürün</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+        <span>{{ listings|length }}</span> Məhsul Mövcuddur
+    </span>
+</div>
+
+<!-- Listings Grid -->
+<div class="row g-4" id="listingsGrid">
+    {% for listing in listings %}
+    <div class="col-lg-4 col-md-6 listing-item">
+        <div class="listing-card">
+            <!-- Image Area -->
+            <div class="listing-card-img-wrap">
+                {% if listing.display_image %}
+                    <img src="{{ listing.display_image }}" class="listing-card-img" alt="{{ listing.title }}">
+                {% else %}
+                    <div class="listing-placeholder-img">
+                        <i class="bi bi-image"></i>
+                        <span class="small fw-semibold">Şəkil yoxdur</span>
+                    </div>
+                {% endif %}
+
+                <!-- Floating Badges -->
+                <span class="badge-tag-category">
+                    <i class="bi bi-tag-fill"></i> {{ listing.get_category_display|default:listing.category|default:"Ümumi" }}
+                </span>
+
+                <span class="badge-tag-status">
+                    <span class="pulse-dot"></span> Canlı
+                </span>
+
+                {% if listing.end_time %}
+                    <span class="badge-tag-time">
+                        <i class="bi bi-clock-history text-warning"></i> {{ listing.end_time|date:"d M, H:i" }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Card Body -->
+            <div class="listing-card-body">
+                <h3 class="listing-card-title" title="{{ listing.title }}">{{ listing.title }}</h3>
+                <p class="listing-card-desc">{{ listing.description|truncatechars:95 }}</p>
+
+                <!-- Seller Info Bar -->
+                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-light border mb-3 small">
+                    <a href="{% url 'profile' listing.creator.username %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark" title="Satıcının profilinə bax">
+                        <div style="width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #818cf8); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">
+                            {{ listing.creator.username|make_list|first|upper }}
+                        </div>
+                        <span class="fw-semibold text-truncate" style="max-width: 130px;">
+                            {{ listing.seller_name|default:listing.creator.username }}
+                        </span>
+                    </a>
+                    <span class="badge bg-white text-secondary border small" title="Satıcının etibarlılıq balı">
+                        <i class="bi bi-shield-check text-success me-1"></i>{{ listing.creator.reputation_score }}%
+                    </span>
+                </div>
+
+                <!-- Pricing Box -->
+                <div class="listing-pricing-box">
+                    <div>
+                        <div class="price-label">
+                            {% if listing.has_bids %}Cari Təklif{% else %}Başlanğıc Qiymət{% endif %}
+                        </div>
+                        <div class="price-value text-primary fw-bold fs-4">
+                            {{ listing.current_bid }} ₼
+                        </div>
+                        <div class="small text-muted" style="font-size: 0.75rem;">
+                            Min. artım: <strong>+{{ listing.min_increment }} ₼</strong> (BR-4)
+                        </div>
+                    </div>
+
+                    <a href="{% url 'listing' listing.id %}" class="btn btn-primary btn-sm px-3">
+                        Təklif Ver <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="empty-state-card text-center py-5 bg-white rounded-4 shadow-sm">
+            <div class="empty-state-icon text-muted fs-1 mb-2">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3 class="empty-state-title h5 fw-bold">Axtarışınıza uyğun hərrac tapılmadı</h3>
+            <p class="empty-state-text text-muted small mb-3">
+                Süzgəc parametrlərini dəyişdirərək və ya təmizləyərək yenidən yoxlayın.
+            </p>
+            <a href="{% url 'index' %}" class="btn btn-outline-primary btn-sm px-4">
+                Bütün Hərracları Göstər
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

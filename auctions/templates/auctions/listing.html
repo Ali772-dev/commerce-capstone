@@ -1,0 +1,898 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}{{ product.title }} | Onlayn Hərrac Sistemi{% endblock %}
+
+{% block body %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-decoration-none"><i class="bi bi-house-door"></i> Ana Səhifə</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'categories' %}?category={{ product.category }}" class="text-decoration-none">{{ product.get_category_display|default:product.category }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ product.title|truncatechars:35 }}</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+
+    <!-- Left Column: Media & Product Details -->
+    <div class="col-lg-7">
+
+        <div class="product-gallery-card mb-4">
+            <!-- Main Product Image -->
+            <div class="product-img-stage" style="border-radius: var(--radius-lg); overflow: hidden; background: #f8fafc; text-align: center; max-height: 440px;">
+                {% if product.display_image %}
+                    <img id="mainDisplayImg" src="{{ product.display_image }}" alt="{{ product.title }}" style="max-height: 440px; width: 100%; object-fit: contain;">
+                {% else %}
+                    <div class="py-5 text-muted">
+                        <i class="bi bi-image fs-1 d-block mb-2"></i>
+                        <span>Şəkil təqdim edilməyib</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Gallery Thumbnails (PRODUCT_IMAGE entity - FT-3) -->
+            {% if gallery_images or product.display_image %}
+                <div class="d-flex gap-2 mt-3 overflow-auto pb-2">
+                    {% if product.display_image %}
+                        <img src="{{ product.display_image }}" class="rounded border p-1" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer;" onclick="document.getElementById('mainDisplayImg').src=this.src;">
+                    {% endif %}
+                    {% for g_img in gallery_images %}
+                        {% if g_img.image %}
+                            <img src="{{ g_img.image.url }}" class="rounded border p-1" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer;" onclick="document.getElementById('mainDisplayImg').src=this.src;">
+                        {% elif g_img.image_url %}
+                            <img src="{{ g_img.image_url }}" class="rounded border p-1" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer;" onclick="document.getElementById('mainDisplayImg').src=this.src;">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Product Meta -->
+            <div class="p-3 bg-white rounded-4 border mt-3">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill">
+                        <i class="bi bi-tag-fill me-1"></i> {{ product.get_category_display|default:product.category }}
+                    </span>
+                    <span class="text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i> Başlama tarixi: {{ product.created_at|date:"d M Y, H:i" }}
+                    </span>
+                </div>
+
+                <h1 class="h3 fw-bold mb-3 text-dark">{{ product.title }}</h1>
+                <p class="text-secondary" style="white-space: pre-line; line-height: 1.6;">{{ product.description }}</p>
+            </div>
+        </div>
+
+        <!-- Seller Contact Card -->
+        <div class="seller-box p-3 bg-white rounded-4 border d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="seller-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-weight: bold; font-size: 1.25rem;">
+                    {{ product.creator.username|make_list|first|upper }}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{% url 'profile' product.creator.username %}" class="fw-bold text-dark text-decoration-none fs-6">
+                            {{ product.seller_name|default:product.creator.username }}
+                        </a>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small" style="font-size: 0.7rem;">
+                            <i class="bi bi-check-circle-fill"></i> Təsdiqlənmiş Satıcı
+                        </span>
+                    </div>
+                    <div class="text-muted small">
+                        <span><i class="bi bi-person-badge me-1"></i>Rol: {{ product.creator.get_role_display }}</span> &bull; 
+                        <span><i class="bi bi-shield-check me-1 text-success"></i>Etibar: {{ product.creator.reputation_score }}%</span> &bull; 
+                        <span><i class="bi bi-people me-1"></i>{{ product.creator.followers_count }} izləyici</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                {% if user.is_authenticated and user != product.creator %}
+                    <a href="{% url 'toggle_follow' product.creator.id %}" class="btn {% if is_following_seller %}btn-outline-danger{% else %}btn-primary{% endif %} btn-sm">
+                        {% if is_following_seller %}
+                            <i class="bi bi-person-dash-fill me-1"></i> İzləmədən Çıx
+                        {% else %}
+                            <i class="bi bi-person-plus-fill me-1"></i> İzlə
+                        {% endif %}
+                    </a>
+                {% endif %}
+
+                <a href="{% url 'profile' product.creator.username %}" class="btn btn-outline-secondary btn-sm" title="Profilə keç">
+                    <i class="bi bi-person-circle me-1"></i> Profil
+                </a>
+
+                {% if product.phone_number %}
+                    <a href="tel:{{ product.phone_number }}" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-telephone-fill me-1"></i> {{ product.phone_number }}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comment-card p-3 bg-white rounded-4 border mb-4">
+            <h4 class="h5 fw-bold mb-3 d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-chat-left-text-fill text-primary me-2"></i>Suallar və Şərhlər</span>
+                <span class="badge bg-light text-dark border">{{ comments|length }}</span>
+            </h4>
+
+            {% if user.is_authenticated %}
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <textarea name="comment" class="form-control" rows="3" placeholder="Məhsul haqqında sualınızı və ya fikrinizi yazın..." required></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" name="comment_submit" class="btn btn-primary btn-sm px-3">
+                            <i class="bi bi-send-fill me-1"></i> Şərh Paylaş
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="alert alert-info py-2 px-3 small mb-4">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    Şərh yazmaq üçün zəhmət olmasa <a href="{% url 'login' %}" class="fw-bold">daxil olun</a>.
+                </div>
+            {% endif %}
+
+            <div class="comments-list">
+                {% for comment in comments %}
+                    <div class="p-2 border-bottom">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <strong class="text-dark">{{ comment.user.username }}</strong>
+                            <span>{{ comment.created_at|date:"d M, H:i" }}</span>
+                        </div>
+                        <p class="mb-0 small text-secondary">{{ comment.content }}</p>
+                    </div>
+                {% empty %}
+                    <div class="text-muted small text-center py-3">Hələ heç bir şərh yazılmayıb. İlk şərhi siz yazın!</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Sticky Bidding Sidebar & History -->
+    <div class="col-lg-5">
+
+        <div class="action-card p-4 bg-white rounded-4 border shadow-sm sticky-top" style="top: 90px;">
+
+            <!-- Status Announcement -->
+            {% if not product.is_active %}
+                <div class="alert {% if product.winner %}alert-success{% else %}alert-secondary{% endif %} mb-3 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if product.winner %}
+                            <i class="bi bi-trophy-fill fs-2 text-warning"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">Hərrac Başa Çatdı! (CLOSED)</div>
+                                <div>Qalib: <strong class="text-decoration-underline">{{ product.winner.username }}</strong></div>
+                                {% if product.winner == request.user %}
+                                    {% if product.is_paid %}
+                                        <div class="mt-2 pt-2 border-top border-success-subtle d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                            <span class="small fw-semibold text-success">
+                                                <i class="bi bi-patch-check-fill text-success me-1"></i>
+                                                Ödəniş uğurla tamamlandı! Sifarişiniz təsdiqlənib.
+                                            </span>
+                                            <a href="{% url 'checkout' product.id %}" class="btn btn-outline-success btn-sm rounded-pill fw-bold px-3 shadow-sm">
+                                                <i class="bi bi-receipt me-1"></i> Qəbzə Bax
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="mt-2 pt-2 border-top border-success-subtle d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                            <span class="small fw-semibold text-dark">
+                                                <i class="bi bi-shield-check text-success me-1"></i>
+                                                Ödənişi tamamlayın ki, etibarlılıq balınız düşməsin!
+                                            </span>
+                                            <a href="{% url 'checkout' product.id %}" class="btn btn-success btn-sm rounded-pill fw-bold px-3 shadow-sm">
+                                                <i class="bi bi-credit-card me-1"></i> Sifarişi Rəsmiləşdir və Ödə
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% elif product.creator == request.user and product.is_paid %}
+                                    <div class="mt-2 pt-2 border-top border-success-subtle d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                        <span class="small fw-semibold text-success">
+                                            <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                            Alıcı ödənişi tamamladı (Gəlir cüzdanınıza əlavə edildi).
+                                        </span>
+                                        <a href="{% url 'checkout' product.id %}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-3 shadow-sm">
+                                            <i class="bi bi-receipt me-1"></i> Qəbzə Bax
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill fs-2 text-muted"></i>
+                            <div>
+                                <div class="fw-bold">Hərrac Bağlandı</div>
+                                <div class="small">Heç bir təklif qeydə alınmadı.</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Dəqiq Bitmə Vaxtı / Geri Sayım və Anti-Sniping (BR-6) -->
+            {% if product.end_time %}
+                {% if product.is_active %}
+                    <div class="p-3 bg-light rounded-3 border mb-3 text-center">
+                        <div class="small fw-bold text-secondary mb-1 d-flex align-items-center justify-content-center gap-1 flex-wrap">
+                            <i class="bi bi-clock-history text-danger me-1"></i> 
+                            <span>Bitmə Vaxtı (BR-6):</span>
+                            {% if product.anti_sniping_enabled %}
+                                <span class="badge bg-warning-subtle text-dark border border-warning rounded-pill px-2 py-0.5" style="font-size: 0.68rem;" title="Son 2 dəqiqədə təklif gələrsə vaxt avtomatik 2 dəqiqə uzadılır">
+                                    <i class="bi bi-hourglass-split me-1"></i>Anti-Sniping
+                                </span>
+                            {% endif %}
+                            {% if product.anti_sniping_count > 0 %}
+                                <span class="badge bg-danger rounded-pill px-2 py-0.5" style="font-size: 0.68rem;" id="antiSnipingCountBadge">
+                                    +{{ product.anti_sniping_count }} dəfə uzadıldı
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="fs-5 fw-bold text-dark" id="liveEndTimeDisplay">
+                            {{ product.end_time|date:"d M Y, H:i" }}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Price Highlight Box (AZN / ₼) with Live Indicator -->
+            <div class="p-3 bg-primary-subtle rounded-3 border border-primary-subtle mb-3 position-relative overflow-hidden" id="livePriceBox" style="transition: all 0.4s ease;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="small text-muted fw-semibold" id="livePriceLabel">
+                            {% if product.is_active %}
+                                {% if bids %}Cari Ən Yüksək Təklif{% else %}Başlanğıc Qiymət{% endif %}
+                            {% else %}
+                                Qalib Qiymət
+                            {% endif %}
+                        </div>
+                        <div class="display-6 fw-bold text-primary" id="liveCurrentBidDisplay" style="transition: transform 0.3s ease;">
+                            {{ current_bid }} ₼
+                        </div>
+                        <div class="small text-muted mt-1" id="liveStartingMinIncrement">
+                            Başlanğıc: <strong>{{ product.starting_bid }} ₼</strong> | Min. artım: <strong id="liveMinIncrementText">+{{ product.min_increment }} ₼</strong> (BR-4)
+                        </div>
+                        {% if product.deposit_percentage < 100 %}
+                            <div class="mt-2 pt-2 border-top border-primary-subtle small text-dark d-flex align-items-center gap-1">
+                                <i class="bi bi-shield-lock-fill text-primary"></i>
+                                <span>Tələb olunan Beh:</span>
+                                <strong class="badge bg-primary text-white">{{ product.deposit_percentage }}% (Minimum {{ required_deposit_next_bid }} ₼)</strong>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if product.is_active %}
+                        <span class="badge bg-success rounded-pill px-3 py-2 d-flex align-items-center gap-1 shadow-sm" id="liveActiveBadge">
+                            <span class="pulse-dot"></span> Canlı Hərrac
+                        </span>
+                    {% else %}
+                        {% if product.is_paid %}
+                            <span class="badge bg-success rounded-pill px-3 py-2" id="liveActiveBadge">
+                                <i class="bi bi-patch-check-fill me-1"></i> Ödənildi
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill px-3 py-2" id="liveActiveBadge">
+                                Başa Çatıb
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Watchlist Button -->
+            {% if user.is_authenticated %}
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    {% if in_watchlist %}
+                        <button type="submit" name="watchlist_submit" class="btn btn-outline-danger w-100 py-2">
+                            <i class="bi bi-heart-fill me-1"></i> İstək siyahınızdadır (Çıxar)
+                        </button>
+                    {% else %}
+                        <button type="submit" name="watchlist_submit" class="btn btn-outline-secondary w-100 py-2">
+                            <i class="bi bi-heart me-1"></i> İstək siyahısına əlavə et
+                        </button>
+                    {% endif %}
+                </form>
+            {% endif %}
+
+            <!-- Close Auction Form (Satıcı və ya Admin üçün) -->
+            {% if product.is_active %}
+                {% if request.user == product.creator or request.user.is_admin_user %}
+                    <form method="post" class="mb-3" onsubmit="return confirm('Hərracı indi bitirmək istədiyinizdən əminsiniz?');">
+                        {% csrf_token %}
+                        <button type="submit" name="close_auction" class="btn btn-danger btn-sm w-100 py-2">
+                            <i class="bi bi-stop-circle-fill me-1"></i> Hərracı Yekunlaşdır (Qalibi Təyin Et)
+                        </button>
+                    </form>
+                {% endif %}
+            {% endif %}
+
+            <!-- Bidding Form (Active listings only) -->
+            {% if product.is_active %}
+                {% if user.is_authenticated %}
+                    
+                    <!-- Dinamik Xəbərdarlıq Bloku (BR-2 və BR-8) -->
+                    <div id="liveBiddingAlertBox">
+                        {% if user == product.creator %}
+                            <!-- BR-2 Qaydası: Satıcı öz məhsuluna təklif verə bilməz -->
+                            <div class="alert alert-warning small py-2 px-3 mb-3">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <strong>BR-2 Qaydası:</strong> Siz bu məhsulun satıcısısınız, öz məhsulunuza təklif (bid) verə bilməzsiniz.
+                            </div>
+                        {% elif user == bids.first.bidder %}
+                            <!-- BR-8 Qaydası: Lider alıcı ard-arda təklif verə bilməz -->
+                            <div class="alert alert-info small py-2 px-3 mb-3" id="leaderAlertBlock">
+                                <i class="bi bi-info-circle-fill me-1"></i>
+                                <strong>BR-8 Qaydası:</strong> Siz hazırda ən yüksək təkliflə lidersiniz. Digər alıcı təklif verməyənə qədər ard-arda təklif verə bilməzsiniz.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Canlı Təklif Forması -->
+                    <div id="bidFormWrapper" {% if user == product.creator or user == bids.first.bidder %}style="display: none;"{% endif %}>
+                        
+                        <!-- Cüzdan və Sərbəst Balans Göstəricisi (Maliyyə Təminatı) -->
+                        <div class="p-2 mb-2 rounded-3 bg-light border d-flex justify-content-between align-items-center" id="userWalletNotice">
+                            <div class="small">
+                                <i class="bi bi-wallet2 text-primary me-1"></i>
+                                <span class="text-muted">Sərbəst Balans:</span>
+                                <strong class="text-success ms-1" id="liveUserAvailableBalance">{{ user_available_balance }} ₼</strong>
+                                <span class="text-muted ms-1" style="font-size: 0.75rem;" id="liveUserCommitmentText" {% if user_active_commitment == 0 %}style="display: none;"{% endif %}>
+                                    (Rezerv: {{ user_active_commitment }} ₼)
+                                </span>
+                            </div>
+                            <a href="{% url 'wallet' %}" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.75rem;" title="Cüzdana bax / Artır">
+                                <i class="bi bi-plus-circle me-1"></i>Artır
+                            </a>
+                        </div>
+
+                        <!-- Aktiv Avtomatik Təklif (Auto-Bid) Bildirişi -->
+                        {% if user_auto_bid %}
+                            <div class="alert alert-warning py-2 px-3 small rounded-3 d-flex justify-content-between align-items-center mb-2" id="userAutoBidStatusBox">
+                                <div>
+                                    <i class="bi bi-robot text-dark me-1"></i>
+                                    <span>Aktiv Auto-Bid Limitiniz:</span> 
+                                    <strong class="text-dark">{{ user_auto_bid.max_amount }} ₼</strong>
+                                </div>
+                                <form method="post" class="d-inline" onsubmit="return confirm('Avtomatik təklif limitinizi ləğv etmək istəyirsiniz?');">
+                                    {% csrf_token %}
+                                    <button type="submit" name="cancel_auto_bid" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.75rem;">
+                                        <i class="bi bi-x-circle me-1"></i>Ləğv Et
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+
+                        <!-- Təklif Növü Seçimi (Tək Təklif vs Avtomatik Təklif) -->
+                        <ul class="nav nav-pills nav-fill mb-2 bg-light p-1 rounded-3" id="biddingTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active py-1 small fw-semibold" id="manual-bid-tab" data-bs-toggle="pill" data-bs-target="#manualBidPane" type="button" role="tab">
+                                    <i class="bi bi-hammer me-1"></i>Tək Təklif
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-1 small fw-semibold" id="auto-bid-tab" data-bs-toggle="pill" data-bs-target="#autoBidPane" type="button" role="tab">
+                                    <i class="bi bi-robot me-1"></i>Avtomatik (Auto-Bid)
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="biddingTabsContent">
+                            <!-- 1. Tək Təklif Paneli -->
+                            <div class="tab-pane fade show active" id="manualBidPane" role="tabpanel">
+                                <form method="post" class="mt-2" id="biddingForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="bid_submit" value="1">
+                                    <input type="hidden" name="is_ajax" value="1">
+                                    
+                                    <label class="form-label d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-semibold small">Təklif Məbləği (₼ AZN)</span>
+                                        <span class="badge bg-light text-primary border" id="liveNextMinBidBadge">
+                                            Min: {{ next_min_bid }} ₼
+                                        </span>
+                                    </label>
+
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text bg-light fw-bold text-muted">₼</span>
+                                        <input type="number" step="0.50" name="bid" id="bidAmountInput" 
+                                               min="{{ next_min_bid }}" value="{{ next_min_bid }}"
+                                               class="form-control form-control-lg fw-bold text-primary" required>
+                                    </div>
+
+                                    <div class="d-flex gap-1 mb-3" id="quickButtonsContainer">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1 quick-bid-btn" data-inc="1">+1 ₼</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1 quick-bid-btn" data-inc="5">+5 ₼</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1 quick-bid-btn" data-inc="10">+10 ₼</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1 quick-bid-btn" data-inc="50">+50 ₼</button>
+                                    </div>
+
+                                    <button type="submit" id="bidSubmitBtn" class="btn btn-primary w-100 btn-lg fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                        <i class="bi bi-hammer"></i> <span>Təklifi Təsdiq Et</span>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- 2. Avtomatik Təklif (Auto-Bid / Proxy Bidding) Paneli -->
+                            <div class="tab-pane fade" id="autoBidPane" role="tabpanel">
+                                <form method="post" class="mt-2" id="autoBiddingForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="auto_bid_submit" value="1">
+                                    <input type="hidden" name="is_ajax" value="1">
+                                    
+                                    <label class="form-label d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-semibold small">Maksimum Limitiniz (₼ AZN)</span>
+                                        <span class="badge bg-light text-warning-emphasis border" id="liveAutoBidMinBadge">
+                                            Min: {{ next_min_bid }} ₼
+                                        </span>
+                                    </label>
+
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text bg-light fw-bold text-muted">₼</span>
+                                        <input type="number" step="1.00" name="max_amount" id="autoBidMaxInput" 
+                                               min="{{ next_min_bid }}" value="{% if user_auto_bid %}{{ user_auto_bid.max_amount }}{% else %}{{ next_min_bid }}{% endif %}"
+                                               class="form-control form-control-lg fw-bold text-dark" required>
+                                    </div>
+
+                                    <div class="p-2 mb-3 bg-light rounded-3 border small text-muted" style="font-size: 0.76rem;">
+                                        <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                                        Siz oflayn olsanız belə, başqa alıcılar təklif verdikcə sistem sizin əvəzinizə minimum artım addımı ilə təklifi bu limitə qədər avtomatik artıracaq.
+                                    </div>
+
+                                    <button type="submit" id="autoBidSubmitBtn" class="btn btn-warning w-100 btn-lg fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
+                                        <i class="bi bi-robot"></i> <span>Avtomatik Təklifi Təsdiq Et</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <div class="text-center p-3 bg-light rounded mt-3">
+                        <i class="bi bi-lock-fill fs-3 text-muted d-block mb-1"></i>
+                        <div class="fw-semibold">Hərracda iştirak üçün daxil olun</div>
+                        <p class="small text-muted mb-2">Təklif vermək üçün hesabınıza daxil olmalısınız.</p>
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-sm px-4">Daxil Ol</a>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Bid History Card (FT-6 Tələbi: Saat və istifadəçi adı ilə canlı təklif keçmişi) -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold small text-dark"><i class="bi bi-clock-history me-1 text-primary"></i> Təklif Tarixçəsi (FT-6)</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small py-1 px-2 d-flex align-items-center gap-1" style="font-size: 0.68rem;">
+                            <span class="pulse-dot" style="width: 6px; height: 6px;"></span> Canlı
+                        </span>
+                    </div>
+                    <span class="badge bg-secondary-subtle text-secondary" id="liveBidsCountBadge">{{ bids|length }} təklif</span>
+                </div>
+
+                <div class="list-group list-group-flush" id="liveBidHistoryList" style="max-height: 260px; overflow-y: auto;">
+                    {% for bid in bids %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bid-item" data-bid-id="{{ bid.id }}">
+                            <div>
+                                <span class="fw-semibold text-dark small">{{ bid.bidder.username }}</span>
+                                {% if forloop.first and product.is_active %}
+                                    <span class="badge bg-warning text-dark ms-1 leader-badge" style="font-size: 0.65rem;">Lider</span>
+                                {% endif %}
+                                <div class="text-muted" style="font-size: 0.72rem;">{{ bid.created_at|date:"d M, H:i:s" }}</div>
+                            </div>
+                            <span class="fw-bold text-success">{{ bid.amount }} ₼</span>
+                        </div>
+                    {% empty %}
+                        <div id="liveEmptyBidsPlaceholder" class="text-muted small text-center py-3">Hələ heç bir təklif verilməyib.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Admin Ləğv Etmə Seçimi (FT-7, BR-11) -->
+            {% if user.is_authenticated and user.is_admin_user and product.is_active %}
+                <div class="mt-3 pt-3 border-top text-center">
+                    <a href="{% url 'cancel_listing' product.id %}" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Bu hərracı ləğv etmək istədiyinizdən əminsiniz? (BR-11 status CANCELLED olacaq)');">
+                        <i class="bi bi-shield-x me-1"></i> İnzibatçı: Hərracı Ləğv Et (FT-7)
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Xəta və Şikayət Bildir (Report) -->
+            <div class="mt-3 pt-3 border-top text-center">
+                <a href="{% url 'report_listing' product.id %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1 hover-danger">
+                    <i class="bi bi-flag text-danger"></i> <span>Bu elan haqqında xəta və ya şikayət bildir</span>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Canlı Bildirişlər üçün Toast Konteyneri -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="liveToastContainer"></div>
+
+<!-- Canlı Təklif CSS Animasiyaları -->
+<style>
+    @keyframes pricePulseGlow {
+        0% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
+        30% { transform: scale(1.02); box-shadow: 0 0 25px rgba(16, 185, 129, 0.45); background-color: #dcfce7 !important; }
+        100% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .price-flash-highlight {
+        animation: pricePulseGlow 1.4s ease-out;
+    }
+    @keyframes bidSlideDown {
+        from { opacity: 0; transform: translateY(-12px); background-color: #ecfdf5; }
+        to { opacity: 1; transform: translateY(0); background-color: transparent; }
+    }
+    .bid-highlight-new {
+        animation: bidSlideDown 0.6s ease-out;
+    }
+</style>
+
+<!-- Canlı Hərrac və Yeniləmə Skripti (Səhifəni Yeniləmədən Canlı Tarixçə) -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const liveUrl = "{% url 'listing_live_bids' product.id %}";
+        const currentUsername = "{{ user.username }}";
+        const isUserAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+        const isSeller = {% if user == product.creator %}true{% else %}false{% endif %};
+        
+        let currentBidAmount = parseFloat("{{ current_bid|default:'0' }}");
+        let currentBidsCount = parseInt("{{ bids|length }}");
+        let lastTopBidId = {% if bids.first %}{{ bids.first.id }}{% else %}null{% endif %};
+        let isPolling = true;
+
+        // Xoş səs effekti (Web Audio API - heç bir xarici fayla ehtiyac yoxdur)
+        function playChime(isGood = true) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                if (isGood) {
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+                } else {
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(330, ctx.currentTime + 0.15);
+                }
+                gain.gain.setValueAtTime(0.06, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            } catch(e) {}
+        }
+
+        // Canlı Toast Bildirişi Göstərmək
+        function showLiveToast(title, message, type = 'success') {
+            const container = document.getElementById('liveToastContainer');
+            if (!container) return;
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center text-bg-${type} border-0 shadow-lg mb-2`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <div class="fw-bold fs-6 mb-1">${title}</div>
+                        <div class="small">${message}</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Bağla"></button>
+                </div>
+            `;
+            container.appendChild(toastEl);
+            const bsToast = new bootstrap.Toast(toastEl, { delay: 4500 });
+            bsToast.show();
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        }
+
+        // Təhlükəsiz HTML escape
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // CSRF Token oxumaq
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Tez artırma düymələri (+1 ₼, +5 ₼, +10 ₼, +50 ₼)
+        document.querySelectorAll('.quick-bid-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const inc = parseFloat(this.getAttribute('data-inc')) || 1.0;
+                const input = document.getElementById('bidAmountInput');
+                if (!input) return;
+                const minVal = parseFloat(input.min) || 0;
+                const curVal = parseFloat(input.value) || minVal;
+                input.value = (Math.max(curVal, minVal) + inc).toFixed(2);
+            });
+        });
+
+        // Canlı Məlumatları Yeniləmək Funksiyası
+        function updateLiveUI(data, isSelfBid = false) {
+            const priceBox = document.getElementById('livePriceBox');
+            const currentBidDisplay = document.getElementById('liveCurrentBidDisplay');
+            const nextMinBidBadge = document.getElementById('liveNextMinBidBadge');
+            const bidInput = document.getElementById('bidAmountInput');
+            const bidsCountBadge = document.getElementById('liveBidsCountBadge');
+            const bidHistoryList = document.getElementById('liveBidHistoryList');
+            const alertBox = document.getElementById('liveBiddingAlertBox');
+            const formWrapper = document.getElementById('bidFormWrapper');
+
+            // 1. Qiymət blokunu işıqlandırmaq (Flash Glow)
+            if (priceBox) {
+                priceBox.classList.remove('price-flash-highlight');
+                void priceBox.offsetWidth; // trigger reflow
+                priceBox.classList.add('price-flash-highlight');
+            }
+
+            if (currentBidDisplay) {
+                currentBidDisplay.textContent = data.current_bid + ' ₼';
+            }
+
+            if (nextMinBidBadge) {
+                nextMinBidBadge.textContent = 'Min: ' + data.next_min_bid + ' ₼';
+            }
+
+            const autoBidMinBadge = document.getElementById('liveAutoBidMinBadge');
+            if (autoBidMinBadge) {
+                autoBidMinBadge.textContent = 'Min: ' + data.next_min_bid + ' ₼';
+            }
+
+            const autoBidInput = document.getElementById('autoBidMaxInput');
+            if (autoBidInput) {
+                autoBidInput.min = data.next_min_bid;
+            }
+
+            // Anti-Sniping və Bitmə vaxtı yeniləməsi
+            if (data.end_time_display) {
+                const endTimeDisplay = document.getElementById('liveEndTimeDisplay');
+                if (endTimeDisplay) endTimeDisplay.textContent = data.end_time_display;
+            }
+            if (data.anti_sniping_count && data.anti_sniping_count > 0) {
+                const countBadge = document.getElementById('antiSnipingCountBadge');
+                if (countBadge) {
+                    countBadge.textContent = '+' + data.anti_sniping_count + ' dəfə uzadıldı';
+                    countBadge.style.display = 'inline-block';
+                }
+            }
+
+            if (bidInput) {
+                bidInput.min = data.next_min_bid;
+                const curInputVal = parseFloat(bidInput.value) || 0;
+                if (curInputVal < parseFloat(data.next_min_bid)) {
+                    bidInput.value = data.next_min_bid;
+                }
+            }
+
+            if (bidsCountBadge) {
+                bidsCountBadge.textContent = data.bids_count + ' təklif';
+            }
+
+            // 2. Təklif Tarixçəsi Siyahısını Yeniləmək
+            if (bidHistoryList && data.bids) {
+                if (data.bids.length === 0) {
+                    bidHistoryList.innerHTML = '<div id="liveEmptyBidsPlaceholder" class="text-muted small text-center py-3">Hələ heç bir təklif verilməyib.</div>';
+                } else {
+                    let html = '';
+                    data.bids.forEach((b, idx) => {
+                        const isLeader = (idx === 0 && data.is_active);
+                        const isNew = (lastTopBidId && b.id > lastTopBidId);
+                        html += `
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bid-item ${isNew ? 'bid-highlight-new' : ''}" data-bid-id="${b.id}">
+                                <div>
+                                    <span class="fw-semibold text-dark small">${escapeHtml(b.bidder)}</span>
+                                    ${isLeader ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Lider</span>' : ''}
+                                    <div class="text-muted" style="font-size: 0.72rem;">${b.time}</div>
+                                </div>
+                                <span class="fw-bold text-success">${b.amount} ₼</span>
+                            </div>
+                        `;
+                    });
+                    bidHistoryList.innerHTML = html;
+                }
+            }
+
+            // 3. İstifadəçi Liderdirsə və ya Liderliyi İtiribsə Formu Dəyişmək
+            if (isUserAuthenticated && !isSeller) {
+                if (data.is_current_leader) {
+                    if (alertBox) {
+                        alertBox.innerHTML = `
+                            <div class="alert alert-info small py-2 px-3 mb-3" id="leaderAlertBlock">
+                                <i class="bi bi-info-circle-fill me-1"></i>
+                                <strong>BR-8 Qaydası:</strong> Siz hazırda ən yüksək təkliflə lidersiniz. Digər alıcı təklif verməyənə qədər ard-arda təklif verə bilməzsiniz.
+                            </div>
+                        `;
+                    }
+                    if (formWrapper) formWrapper.style.display = 'none';
+                } else {
+                    if (alertBox) alertBox.innerHTML = '';
+                    if (formWrapper && data.is_active) formWrapper.style.display = 'block';
+                }
+
+                // Sərbəst cüzdan balansını yeniləmək (Maliyyə Təminatı)
+                if (data.user_available_balance !== undefined && data.user_available_balance !== null) {
+                    const availDisplay = document.getElementById('liveUserAvailableBalance');
+                    if (availDisplay) availDisplay.textContent = data.user_available_balance + ' ₼';
+                    const commitText = document.getElementById('liveUserCommitmentText');
+                    if (commitText) {
+                        const commVal = parseFloat(data.user_active_commitment) || 0;
+                        if (commVal > 0) {
+                            commitText.textContent = `(Rezerv: ${data.user_active_commitment} ₼)`;
+                            commitText.style.display = 'inline';
+                        } else {
+                            commitText.style.display = 'none';
+                        }
+                    }
+                }
+            }
+
+            // Daxili vəziyyəti yeniləyirik
+            currentBidAmount = parseFloat(data.current_bid);
+            currentBidsCount = data.bids_count;
+            if (data.bids && data.bids.length > 0) {
+                lastTopBidId = data.bids[0].id;
+            }
+        }
+
+        // Hər 2 saniyədən bir arxa fonda canlı yoxlama (Polling)
+        async function checkLiveBids() {
+            if (!isPolling) return;
+            try {
+                const response = await fetch(liveUrl, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+
+                if (data.success) {
+                    const newPrice = parseFloat(data.current_bid);
+                    const newCount = data.bids_count;
+                    const topBid = (data.bids && data.bids.length > 0) ? data.bids[0] : null;
+
+                    // Əgər yeni təklif gəlibsə
+                    if (newCount > currentBidsCount || newPrice > currentBidAmount || (topBid && topBid.id !== lastTopBidId)) {
+                        const isMyOwnBid = (topBid && topBid.bidder === currentUsername);
+
+                        // Başqası təklif veribsə bildiriş çıxarırıq
+                        if (!isMyOwnBid) {
+                            playChime(true);
+                            showLiveToast(
+                                "🔥 Yeni Canlı Təklif!", 
+                                `<strong>${escapeHtml(data.leader_username)}</strong> adlı istifadəçi <strong>${data.current_bid} ₼</strong> təklif verdi!`,
+                                "primary"
+                            );
+                        }
+
+                        updateLiveUI(data, isMyOwnBid);
+                    }
+                }
+            } catch (err) {
+                // Şəbəkə xətası olarsa sakit ötürür
+            }
+        }
+
+        // Canlı dövrü başladırıq (Hər 2 saniyə)
+        const pollTimer = setInterval(checkLiveBids, 2000);
+
+        // AJAX Form Təqdimatı (Səhifə yenilənmədən təklif vermək)
+        const biddingForm = document.getElementById('biddingForm');
+        if (biddingForm) {
+            biddingForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('bidSubmitBtn');
+                const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+                
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Təklif qeydə alınır...';
+                }
+
+                try {
+                    const formData = new FormData(biddingForm);
+                    formData.set('bid_submit', '1');
+                    formData.set('is_ajax', '1');
+
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        playChime(true);
+                        showLiveToast("✅ Təbrik edirik!", result.message, "success");
+                        // Dərhal canlı UI-ı yeniləyirik
+                        await checkLiveBids();
+                    } else {
+                        playChime(false);
+                        showLiveToast("⚠️ Qayda Xətası", result.error || "Təklif qəbul edilmədi.", "danger");
+                    }
+                } catch (err) {
+                    playChime(false);
+                    showLiveToast("❌ Şəbəkə Xətası", "Təklif göndərilərkən xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.", "danger");
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origBtnHtml;
+                    }
+                }
+            });
+        }
+
+        // Avtomatik Təklif (Auto-Bid / Proxy Bidding) Form Təqdimatı
+        const autoBiddingForm = document.getElementById('autoBiddingForm');
+        if (autoBiddingForm) {
+            autoBiddingForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('autoBidSubmitBtn');
+                const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+                
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Avtomatik təklif təyin edilir...';
+                }
+
+                try {
+                    const formData = new FormData(autoBiddingForm);
+                    formData.set('auto_bid_submit', '1');
+                    formData.set('is_ajax', '1');
+
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        playChime(true);
+                        showLiveToast("🤖 Avtomatik Təklif Aktivdir!", result.message, "success");
+                        await checkLiveBids();
+                    } else {
+                        playChime(false);
+                        showLiveToast("⚠️ Qayda Xətası", result.error || "Avtomatik təklif qəbul edilmədi.", "danger");
+                    }
+                } catch (err) {
+                    playChime(false);
+                    showLiveToast("❌ Şəbəkə Xətası", "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.", "danger");
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origBtnHtml;
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

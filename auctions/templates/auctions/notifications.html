@@ -1,0 +1,103 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Bildirişlər | AuctionHub{% endblock %}
+
+{% block body %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h1 class="h2 fw-bold mb-1">
+                    <i class="bi bi-bell-fill text-primary me-2"></i>Bildirişlər
+                </h1>
+                <p class="text-muted small mb-0">Hərraclarınız, təklifləriniz və şərhlər üzrə son fəaliyyətlər</p>
+            </div>
+
+            {% if unread_count > 0 %}
+                <a href="{% url 'mark_all_notifications_read' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-check2-all me-1"></i> Hamısını oxunmuş et ({{ unread_count }})
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="form-card p-0 overflow-hidden shadow-sm">
+            <div class="list-group list-group-flush">
+                {% for notif in notifications %}
+                <div class="list-group-item p-3 border-bottom d-flex align-items-start gap-3 {% if not notif.is_read %}bg-light border-start border-4 border-primary{% endif %}">
+                    
+                    <!-- Icon based on notification type -->
+                    <div style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                        {% if notif.notification_type == 'comment' %}background: #eef2ff; color: #4f46e5;
+                        {% elif notif.notification_type == 'bid' %}background: #e0f2fe; color: #0284c7;
+                        {% elif notif.notification_type == 'outbid' %}background: #fef3c7; color: #d97706;
+                        {% elif notif.notification_type == 'won' %}background: #dcfce7; color: #16a34a;
+                        {% elif notif.notification_type == 'follow' %}background: #f3e8ff; color: #9333ea;
+                        {% else %}background: #f1f5f9; color: #475569;{% endif %}">
+                        
+                        {% if notif.notification_type == 'comment' %}
+                            <i class="bi bi-chat-left-text-fill fs-5"></i>
+                        {% elif notif.notification_type == 'bid' %}
+                            <i class="bi bi-hammer fs-5"></i>
+                        {% elif notif.notification_type == 'outbid' %}
+                            <i class="bi bi-arrow-up-circle-fill fs-5"></i>
+                        {% elif notif.notification_type == 'won' %}
+                            <i class="bi bi-trophy-fill fs-5"></i>
+                        {% elif notif.notification_type == 'follow' %}
+                            <i class="bi bi-person-plus-fill fs-5"></i>
+                        {% else %}
+                            <i class="bi bi-bell-fill fs-5"></i>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold mb-0 text-dark">
+                                {{ notif.title }}
+                                {% if not notif.is_read %}
+                                    <span class="badge bg-primary text-white ms-1" style="font-size: 0.65rem;">Yeni</span>
+                                {% endif %}
+                            </h6>
+                            <span class="text-muted small">{{ notif.created_at|timesince }} əvvəl</span>
+                        </div>
+
+                        <p class="mb-2 text-secondary small" style="line-height: 1.5;">{{ notif.message }}</p>
+
+                        <!-- Actions -->
+                        <div class="d-flex align-items-center gap-2">
+                            {% if notif.listing %}
+                                <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-sm btn-primary py-1 px-3" style="font-size: 0.8rem;">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Elana Bax
+                                </a>
+                            {% elif notif.sender %}
+                                <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-sm btn-outline-primary py-1 px-3" style="font-size: 0.8rem;">
+                                    <i class="bi bi-person-circle me-1"></i> Profilə Keç
+                                </a>
+                            {% endif %}
+
+                            {% if not notif.is_read %}
+                                <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-sm btn-light border py-1 px-2 text-muted" style="font-size: 0.8rem;" title="Oxundu kimi işarələ">
+                                    <i class="bi bi-check2"></i> Oxundu
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+                {% empty %}
+                <div class="empty-state-card py-5">
+                    <div class="empty-state-icon"><i class="bi bi-bell-slash"></i></div>
+                    <h4 class="fw-bold">Bildirişiniz yoxdur</h4>
+                    <p class="text-muted small">Elanlarınıza şərh yazıldıqda və ya təklif verildikdə bildirişlər burada görünəcək.</p>
+                    <a href="{% url 'index' %}" class="btn btn-primary btn-sm px-3">Hərracları Kəşf Et</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

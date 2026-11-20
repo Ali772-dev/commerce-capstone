@@ -1,0 +1,145 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}İstifadəçilər və Profillər | Onlayn Hərrac Sistemi{% endblock %}
+
+{% block body %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-decoration-none"><i class="bi bi-house-door"></i> Ana Səhifə</a></li>
+        <li class="breadcrumb-item active" aria-current="page">İstifadəçilər</li>
+    </ol>
+</nav>
+
+<!-- Page Header & Search Bar -->
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+            <h1 class="h4 fw-bold mb-1 text-dark">
+                <i class="bi bi-people-fill text-primary me-2"></i>İstifadəçilər və Satıcılar
+            </h1>
+            <p class="text-muted small mb-0">İstədiyiniz satıcını və ya istifadəçini tapın, profillərinə baxın və izləyin.</p>
+        </div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+            {{ total_users }} İstifadəçi Tapıldı
+        </span>
+    </div>
+
+    <!-- Search & Filter Form -->
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-7 col-12">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" name="q" class="form-control border-start-0" placeholder="İstifadəçi adı, ad, soyad, e-poçt və ya telefon..." value="{{ q }}">
+            </div>
+        </div>
+        <div class="col-md-3 col-8">
+            <select name="role" class="form-select">
+                <option value="" {% if not role_filter %}selected{% endif %}>Bütün Rollar</option>
+                <option value="SELLER" {% if role_filter == 'SELLER' %}selected{% endif %}>Yalnız Satıcılar</option>
+                <option value="BUYER" {% if role_filter == 'BUYER' %}selected{% endif %}>Yalnız Alıcılar</option>
+                <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Administratorlar</option>
+            </select>
+        </div>
+        <div class="col-md-2 col-4 d-flex gap-1">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-filter me-1"></i> Axtar
+            </button>
+            {% if q or role_filter %}
+                <a href="{% url 'users_search' %}" class="btn btn-outline-secondary" title="Sıfırla">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Users Grid -->
+<div class="row g-4">
+    {% for item in users_list %}
+        {% with u=item.user %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <!-- Card Top: Avatar & User Info -->
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <div class="flex-shrink-0" style="width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #818cf8); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.4rem; font-weight: bold; box-shadow: 0 3px 8px rgba(79,70,229,0.3);">
+                            {{ u.username|make_list|first|upper }}
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <a href="{% url 'profile' u.username %}" class="fw-bold text-dark text-decoration-none text-truncate d-block">
+                                    {{ u.get_full_name|default:u.username }}
+                                </a>
+                                {% if u.role == 'ADMIN' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small" style="font-size: 0.65rem;">Admin</span>
+                                {% elif u.role == 'SELLER' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small" style="font-size: 0.65rem;">Satıcı</span>
+                                {% else %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill small" style="font-size: 0.65rem;">Alıcı</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-at"></i>{{ u.username }}
+                            </div>
+                            {% if u.phone %}
+                                <div class="text-muted small">
+                                    <i class="bi bi-telephone me-1"></i>{{ u.phone }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- User Stats Badges -->
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light border mb-3 small text-muted">
+                        <div class="text-center px-1">
+                            <div class="fw-bold text-dark">{{ item.followers_count }}</div>
+                            <div style="font-size: 0.72rem;">İzləyici</div>
+                        </div>
+                        <div class="text-center px-1 border-start">
+                            <div class="fw-bold text-dark">{{ item.following_count }}</div>
+                            <div style="font-size: 0.72rem;">İzləyir</div>
+                        </div>
+                        <div class="text-center px-1 border-start">
+                            <div class="fw-bold text-primary">{{ item.active_listings_count }}</div>
+                            <div style="font-size: 0.72rem;">Aktiv Elan</div>
+                        </div>
+                        <div class="text-center px-1 border-start">
+                            <div class="fw-bold text-warning">{{ u.reputation_score }}%</div>
+                            <div style="font-size: 0.72rem;">Etibar</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons: Follow & View Profile -->
+                <div class="d-flex gap-2 pt-2 border-top">
+                    <a href="{% url 'toggle_follow' u.id %}" class="btn {% if item.is_following %}btn-outline-danger{% else %}btn-primary{% endif %} btn-sm flex-grow-1">
+                        {% if item.is_following %}
+                            <i class="bi bi-person-dash-fill me-1"></i> İzləmədən Çıx
+                        {% else %}
+                            <i class="bi bi-person-plus-fill me-1"></i> İzlə
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'profile' u.username %}" class="btn btn-outline-secondary btn-sm px-3" title="Profilə bax">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Profil
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+    {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5 bg-white rounded-4 shadow-sm border">
+                <i class="bi bi-person-x text-muted fs-1 mb-2 d-block"></i>
+                <h3 class="h5 fw-bold text-dark">Axtarışa uyğun istifadəçi tapılmadı</h3>
+                <p class="text-muted small mb-3">Fərqli açar sözlər yazaraq yenidən yoxlayın.</p>
+                <a href="{% url 'users_search' %}" class="btn btn-outline-primary btn-sm px-4">Bütün İstifadəçiləri Göstər</a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
